@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salesforce Chat - Test Tool</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; flex-direction: column; align-items: center; background-color: #f0f2f5; margin: 0; padding: 20px; text-align: center; }
+        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 90%; max-width: 800px; margin-bottom: 20px; }
+        h1 { color: #1a1a1a; margin-top: 0; }
+        h2 { border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 25px; color: #333; }
+        button { font-size: 1.1em; font-weight: 600; padding: 12px 28px; cursor: pointer; border-radius: 8px; border: none; background-color: #005fb2; color: white; transition: background-color 0.3s, transform 0.1s; margin-top: 10px; }
+        button:hover:not(:disabled) { background-color: #004a8d; }
+        button:active:not(:disabled) { transform: scale(0.98); }
+        button:disabled { background-color: #cccccc; color: #666666; cursor: not-allowed; }
+        input[type="text"], input[type="password"] { font-size: 1.1em; padding: 10px; border-radius: 8px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; }
+        #userIdInput { width: 80%; max-width: 400px; text-align: center; }
+        .config-grid { display: grid; grid-template-columns: 150px 1fr; gap: 10px 15px; align-items: center; text-align: left; margin-top: 15px; }
+        .config-grid label { font-weight: 600; text-align: right; }
+        .input-wrapper { position: relative; display: flex; align-items: center; }
+        .toggle-password { position: absolute; right: 10px; cursor: pointer; user-select: none; color: #777; }
+        pre { padding: 10px; border: 1px solid #ccc; border-radius: 5px; background-color: #f9f9f9; white-space: pre-wrap; word-wrap: break-word; font-family: monospace; font-size: 0.9em; max-height: 150px; overflow-y: auto; text-align: left; margin-top: 15px; }
+        #logContainer { text-align: left; }
+        #logOutput { background-color: #2b2b2b; color: #f1f1f1; padding: 15px; border-radius: 5px; font-family: monospace; font-size: 0.9em; min-height: 50px; max-height: 300px; overflow-y: auto; white-space: pre-wrap; }
+        .log-error { color: #ff8a8a; }
+        .log-info { color: #82cfff; }
+        .log-success { color: #a5d6a7; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>MIAW JWT Test Tool</h1>
+
+        <div id="step0">
+            <h2>Step 0: Connection Settings</h2>
+            <div class="config-grid">
+                <label for="configJwtApi">JWT API:</label>
+                <div class="input-wrapper">
+                    <input type="password" id="configJwtApi" value="https://*******.execute-api.*****.amazonaws.com/auth/generate-token">
+                    <span class="toggle-password">👁️</span>
+                </div>
+                
+                <label for="configBootstrapSrc">Script URL:</label>
+                <div class="input-wrapper">
+                    <input type="password" id="configBootstrapSrc" value="https://******.develop.my.site.com/ESW********/assets/js/bootstrap.min.js">
+                    <span class="toggle-password">👁️</span>
+                </div>
+
+                <label for="configOrgId">Org ID:</label>
+                <div class="input-wrapper">
+                    <input type="password" id="configOrgId" value="***********">
+                    <span class="toggle-password">👁️</span>
+                </div>
+
+                <label for="configDeploymentName">Deployment:</label>
+                <div class="input-wrapper">
+                    <input type="password" id="configDeploymentName" value="JWTTest">
+                    <span class="toggle-password">👁️</span>
+                </div>
+
+                <label for="configSiteUrl">Site URL:</label>
+                <div class="input-wrapper">
+                    <input type="password" id="configSiteUrl" value="https://******.develop.my.site.com/ESW********">
+                    <span class="toggle-password">👁️</span>
+                </div>
+                
+                <label for="configScrt2Url">SCRT2 URL:</label>
+                <div class="input-wrapper">
+                    <input type="password" id="configScrt2Url" value="https://******.develop.my.salesforce-scrt.com">
+                    <span class="toggle-password">👁️</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="step1">
+            <h2>Step 1: Enter User ID</h2>
+            <input type="text" id="userIdInput" value="cliente-teste-001" placeholder="Enter userId here">
+        </div>
+
+        <div id="step2">
+            <h2>Step 2: Generate Token</h2>
+            <button id="generateTokenBtn">Generate Token</button>
+            <pre id="tokenDisplay" style="display:none;"></pre>
+        </div>
+        
+        <div id="step3">
+            <h2>Step 3: Start Chat</h2>
+            <button id="startChatBtn" disabled>Start Chat</button>
+        </div>
+    </div>
+
+    <div class="container" id="logContainer">
+        <h2>Real-time Logs</h2>
+        <div id="logOutput">Waiting for actions...</div>
+    </div>
+    
+    <script>
+        const userIdInput = document.getElementById('userIdInput');
+        const generateTokenBtn = document.getElementById('generateTokenBtn');
+        const tokenDisplay = document.getElementById('tokenDisplay');
+        const startChatBtn = document.getElementById('startChatBtn');
+        const logOutput = document.getElementById('logOutput');
+        
+        let generatedToken = null;
+
+        function log(message, type = 'info') {
+            const now = new Date().toLocaleTimeString();
+            logOutput.innerHTML += `<div><span class="log-${type}">[${now}] ${message}</span></div>`;
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+        
+        function getConfigurations() {
+            return {
+                jwtApi: document.getElementById('configJwtApi').value.trim(),
+                bootstrapSrc: document.getElementById('configBootstrapSrc').value.trim(),
+                orgId: document.getElementById('configOrgId').value.trim(),
+                deploymentName: document.getElementById('configDeploymentName').value.trim(),
+                siteUrl: document.getElementById('configSiteUrl').value.trim(),
+                scrt2Url: document.getElementById('configScrt2Url').value.trim()
+            };
+        }
+
+        function injectSalesforceScript() {
+            const config = getConfigurations();
+            if (document.getElementById("salesforce-chat-script")) {
+                log("Salesforce script has already been injected.", "info");
+                embeddedservice_bootstrap.utilAPI.launchChat();
+                return;
+            }
+            log("Injecting Salesforce Script into the page...");
+            const script = document.createElement("script");
+            script.id = "salesforce-chat-script";
+            script.type = "text/javascript";
+            script.src = config.bootstrapSrc;
+            script.onload = initSalesforceChat;
+            document.body.appendChild(script);
+        }
+
+        async function handleGenerateToken() {
+            const config = getConfigurations();
+            const userId = userIdInput.value.trim();
+            if (!userId) {
+                log("Please enter a userId.", "error"); return;
+            }
+            log(`Fetching JWT token for user: ${userId}...`);
+            generateTokenBtn.disabled = true;
+            generateTokenBtn.textContent = 'Generating...';
+            try {
+                const response = await fetch(config.jwtApi, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: userId }) });
+                const data = await response.json();
+                if (!response.ok || !data.token) throw new Error('Failed to fetch or token missing from API response.');
+                generatedToken = data.token;
+                tokenDisplay.textContent = generatedToken;
+                tokenDisplay.style.display = 'block';
+                log('JWT token received successfully!', 'success');
+                startChatBtn.disabled = false;
+            } catch (error) {
+                log(`Error getting token: ${error.message}`, 'error');
+            } finally {
+                generateTokenBtn.disabled = false;
+                generateTokenBtn.textContent = 'Generate Token';
+            }
+        }
+
+        function handleStartChat() {
+            startChatBtn.disabled = true;
+            startChatBtn.textContent = 'Loading Chat...';
+            injectSalesforceScript();
+        }
+
+        function initSalesforceChat() {
+            const config = getConfigurations();
+            log('Salesforce script loaded and executed.', 'success');
+            try {
+                embeddedservice_bootstrap.settings.language = 'en_US';
+                window.addEventListener("onEmbeddedMessagingReady", async () => {
+                    log('Event "onEmbeddedMessagingReady" received.', 'success');
+                    try {
+                        log('Authenticating user with token...');
+                        await embeddedservice_bootstrap.userVerificationAPI.setIdentityToken({
+                            identityTokenType: "JWT",
+                            identityToken: generatedToken
+                        });
+                        log('User authenticated! Opening chat...', 'success');
+                        embeddedservice_bootstrap.utilAPI.launchChat();
+                    } catch (error) {
+                        log(`Error after "onReady": ${error.message}`, 'error');
+                    }
+                });
+                embeddedservice_bootstrap.settings.onError = error => {
+                    log(`Salesforce Library Error: ${error.message || JSON.stringify(error)}`, 'error');
+                };
+                embeddedservice_bootstrap.init(
+                    config.orgId, config.deploymentName, config.siteUrl, 
+                    { scrt2URL: config.scrt2Url }
+                );
+                log('Command embeddedservice_bootstrap.init() executed.');
+            } catch (err) {
+                log(`Fatal error on startup: ${err.message}`, 'error');
+            } finally {
+                startChatBtn.disabled = false;
+                startChatBtn.textContent = 'Start Chat';
+            }
+        }
+
+        generateTokenBtn.addEventListener('click', handleGenerateToken);
+        startChatBtn.addEventListener('click', handleStartChat);
+        
+        document.querySelectorAll('.toggle-password').forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                const input = toggle.previousElementSibling;
+                const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+                input.setAttribute('type', type);
+            });
+        });
+    </script>
+</body>
+</html>
