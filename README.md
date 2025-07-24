@@ -20,7 +20,7 @@ Este repositório contém o código-fonte tanto para o **backend** de geração 
 3.  **Configurar e Implantar o Frontend:** Implantar a ferramenta de teste `index.html` em um serviço de hospedagem como o Vercel.
 4.  **Conectar e Testar:** Configurar o CORS e usar a ferramenta para validar a solução de ponta a ponta.
 
-## Glossário de Termos (Dicionário de Dados)
+### Glossário de Termos (Dicionário de Dados)
 
   * **Issuer (iss):** O "emissor" do token. É o identificador do seu backend que o Salesforce usa para encontrar a configuração de verificação correta.
   * **Subject (sub):** O "assunto" do token. Representa o usuário final que está sendo autenticado (ex: `cliente-teste-001`).
@@ -28,6 +28,10 @@ Este repositório contém o código-fonte tanto para o **backend** de geração 
   * **Key ID (kid):** O "identificador da chave". É o nome de uma chave específica dentro de um conjunto, permitindo a seleção da chave correta para verificação.
   * **JWK (JSON Web Key):** Um formato de dados JSON que representa uma chave criptográfica.
   * **JWKS (JSON Web Key Set):** Um formato de dados JSON que representa um conjunto (uma lista) de JWKs.
+
+### Imagem front
+
+<img width="696" height="904" alt="Captura de tela 2025-07-23 203820" src="https://github.com/user-attachments/assets/593f23f8-6c52-423a-9d10-ca1a115b2ad7" />
 
 -----
 
